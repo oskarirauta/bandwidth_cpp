@@ -12,6 +12,7 @@ OBJS:= \
 BANDWIDTH_DIR:=.
 include Makefile.inc
 include cmdparser/Makefile.inc
+include scanner/Makefile.inc
 
 world: example
 
@@ -20,7 +21,7 @@ $(shell mkdir -p objs)
 objs/main.o: main.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<;
 
-example: $(BANDWIDTH_OBJS) $(CMDPARSER_OBJS) $(OBJS)
+example: $(BANDWIDTH_OBJS) $(CMDPARSER_OBJS) $(SCANNER_OBJS) $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@;
 
 .PHONY: clean

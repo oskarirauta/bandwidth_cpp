@@ -1,3 +1,6 @@
 [submodule "cmdparser"]
 	path = cmdparser
 	url = https://github.com/oskarirauta/cmdparser_cpp.git
+[submodule "scanner"]
+	path = scanner
+	url = https://github.com/oskarirauta/scanner_cpp.git

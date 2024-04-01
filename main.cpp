@@ -1,7 +1,6 @@
 #include <iostream>
-#include <chrono>
-#include <thread>
 #include <string>
+#include <poll.h>
 #include "cmdparser.hpp"
 #include "bandwidth.hpp"
 
@@ -10,7 +9,7 @@ const std::string APP_VERSION = "1.0.0";
 
 std::string ifd_name;
 bool list_ifds = false;
-bool kbps = false;
+bool kbps = true;
 bool keep_unit = false;
 int interval = 1000;
 
@@ -27,9 +26,9 @@ static void usage(const CmdParser::Arg &arg) {
 		" -h, --h               usage\n" <<
 		" -v, --v               version\n" <<
 		" -l, --l               list available interfaces\n" <<
-		" -b, --b               display kbps instead of KBps\n" <<
+		" -b, --b               display KBps instead of kbps (kilobits -> kilobytes)\n" <<
 		" -k, --k               keep units, do not convert kb to mb even when number grows\n" <<
-		" -d, --d <ms>          interval, 500-4000 as milliseconds, closest to 1s (1000) is most accurate\n" <<
+		" -d, --d <ms>          interval, 100-4000 as milliseconds, default: 1000\n" <<
 		" -i, --i <interface>   selects interface to monitor\n" <<
 		std::endl;
 }
@@ -47,7 +46,7 @@ static void select_ifd(const CmdParser::Arg &argv) {
 static void select_delay(const CmdParser::Arg &argv) {
 
 	if ( argv.arg.empty()) {
-		std::cout << "illegal interval selected. Value must be between 500 and 4000. Value was empty." << std::endl;
+		std::cout << "illegal interval selected. Value must be between 100 and 4000. Value was empty." << std::endl;
 		exit(1);
 	}
 
@@ -67,8 +66,8 @@ static void select_delay(const CmdParser::Arg &argv) {
 		}
 	}
 
-	if ( d < 500 || d > 4000 ) {
-		std::cout << "illegal interval selected. Value must be between 500 and 4000." << std::endl;
+	if ( d < 100 || d > 4000 ) {
+		std::cout << "illegal interval selected. Value must be between 100 and 4000." << std::endl;
 		exit(1);
 	}
 
@@ -90,7 +89,7 @@ int main(int argc, char **argv) {
 				list_ifds = true;
 			}},
 			{{ "-b", "--b", "-B", "--B" }, [](const CmdParser::Arg &arg) {
-				kbps = true;
+				kbps = false;
 			}},
 			{{ "-k", "--k", "-keep", "--keep" }, [](const CmdParser::Arg &arg) {
 				keep_unit = true;
@@ -106,7 +105,8 @@ int main(int argc, char **argv) {
 	cmdparser.parse();
 
 	bool ifd_ok = false;
-	bandwidth::monitor bm;
+	bandwidth_t  bm;
+
 	if ( !bm.update()) {
 		std::cout << "error: failed to open/read file /proc/net/dev\nAborted" << std::endl;
 		return 1;
@@ -147,13 +147,12 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	uint64_t rx = 0;
-	uint64_t tx = 0;
-	bool first = true;
+	bandwidth_t::bps_t rx;
+	bandwidth_t::bps_t tx;
 
 	while ( true ) {
 
-		std::this_thread::sleep_for (std::chrono::milliseconds(interval));
+		::poll(nullptr, 0, interval);
 
 		if (!bm.update()) {
 			std::cout << "error: failed to open/read file /proc/net/dev\nAborted" << std::endl;
@@ -168,41 +167,35 @@ int main(int argc, char **argv) {
 				continue;
 
 			ifd_ok = true;
-			bool m_rx = false;
-			bool m_tx = false;
 
-			uint64_t new_rx = ifd.rx_rate() / 1024;
-			uint64_t new_tx = ifd.rx_rate() / 1024;
+			bandwidth_t::bps_t new_rx = kbps ? ifd.rx_bps() : ifd.rx();
+			bandwidth_t::bps_t new_tx = kbps ? ifd.tx_bps() : ifd.tx();
 
-			if ( kbps ) {
-				new_rx *= 8;
-				new_tx *= 8;
-			}
+			if ( new_rx == rx && new_tx == tx )
+				break;
 
-			if ( !keep_unit ) {
-				if ( new_rx > 1280 ) {
-					m_rx = true;
-					new_rx /= 1024;
-				}
+			std::string rx_unit;
+			if ( new_rx.type() == bandwidth_t::bps_t::TYPE::K )
+				rx_unit = kbps ? "Kbps" : "Kb/s";
+			else if ( new_rx.type() == bandwidth_t::bps_t::TYPE::M )
+				rx_unit = kbps ? "Mbps" : "Mb/s";
+			else rx_unit = kbps ? "Gbps" : "Gb/s";
 
-				if ( new_tx > 1280 ) {
-					m_tx = true;
-					new_tx /= 1024;
-				}
-			}
+			std::string tx_unit;
+			if ( new_tx.type() == bandwidth_t::bps_t::TYPE::K )
+				tx_unit = kbps ? "Kbps" : "Kb/s";
+			else if ( new_tx.type() == bandwidth_t::bps_t::TYPE::M )
+				tx_unit = kbps ? "Mbps" : "Mb/s";
+			else tx_unit = kbps ? "Gbps" : "Gb/s";
 
-			// not perfect, comparison with 1024kb and 1024mb returns true, but accurate enough for this example
-			if ( rx != new_rx || tx != new_tx || first ) {
-
-				rx = new_rx;
-				tx = new_tx;
-
-				std::cout << ifd.name() <<
-					" rx: " << rx << ( m_rx ? "M" : "K" ) << ( kbps ? "bps" : "b/s" ) <<
-					" tx: " << tx << ( m_tx ? "M" : "K" ) << ( kbps ? "bps" : "b/s" ) <<
+			std::cout << ifd.name() <<
+					" rx: " << (int)new_rx.value() << rx_unit <<
+					" tx: " << (int)new_tx.value() << tx_unit <<
 					std::endl;
-				first = false;
-			}
+
+			rx = new_rx;
+			tx = new_tx;
+			break;
 		}
 
 		if ( !ifd_ok ) {
