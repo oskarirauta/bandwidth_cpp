@@ -188,9 +188,23 @@ int main(int argc, char **argv) {
 				tx_unit = kbps ? "Mbps" : "Mb/s";
 			else tx_unit = kbps ? "Gbps" : "Gb/s";
 
+			double rx_p = ifd.percent().rx;
+			double tx_p = ifd.percent().tx;
+
+			unsigned long long rx_b = ifd.rx_rate() == 0 ? 0 : ((( ifd.rx_rate() / 1.049 ) * 8.3886 ) / 1024);
+			unsigned long long tx_b = ifd.tx_rate() == 0 ? 0 : ((( ifd.tx_rate() / 1.049 ) * 8.3886 ) / 1024);
+
+			// force percentage raise on 5kbps to 0.01 to show percentage even on a very small transmission rates
+			// even when a wider broadband connection is used
+			if ( rx_p < 0.01 && rx_b >= 5 )
+				rx_p = 0.01;
+
+			if ( tx_p < 0.01 && tx_b >= 5 )
+				tx_p = 0.01;
+
 			std::cout << ifd.name() <<
-					" rx: " << (int)new_rx.value() << rx_unit <<
-					" tx: " << (int)new_tx.value() << tx_unit <<
+					" rx: " << (int)new_rx.value() << rx_unit << " (" << rx_p << "%)" <<
+					" tx: " << (int)new_tx.value() << tx_unit << " (" << tx_p << "%)" <<
 					std::endl;
 
 			rx = new_rx;

@@ -9,7 +9,13 @@ static void decimal_fix(double &value) {
 
 bandwidth_t::bps_t::bps_t(const unsigned long long bytes) {
 
-	if ( bytes == 0 ) {
+	this -> bytes = bytes == 0 ? 0 : (( bytes / 1.049 ) * 8.3886 );
+	this -> calculate();
+}
+
+void bandwidth_t::bps_t::calculate() {
+
+	if ( this -> bytes == 0 ) {
 
 		this -> bytes = 0;
 		this -> kb = 0;
@@ -17,8 +23,6 @@ bandwidth_t::bps_t::bps_t(const unsigned long long bytes) {
 		this -> gb = 0;
 
 	} else {
-
-		this -> bytes = ( bytes / 1.049 ) * 8.3886;
 
 		this -> kb = this -> bytes / 1024;
 		decimal_fix(this -> kb);
@@ -75,16 +79,7 @@ bandwidth_t::bps_t bandwidth_t::interface_t::rx() const {
 
 	bandwidth_t::bps_t bps;
 	bps.bytes = this -> _rx_rate;
-
-	bps.kb = bps.bytes / 1024;
-	decimal_fix(bps.kb);
-
-	bps.mb = bps.kb / 1024;
-	decimal_fix(bps. mb);
-
-	bps.gb = bps.mb / 1024;
-	decimal_fix(bps.gb);
-
+	bps.calculate();
 	return bps;
 }
 
@@ -95,15 +90,28 @@ bandwidth_t::bps_t bandwidth_t::interface_t::tx() const {
 
 	bandwidth_t::bps_t bps;
 	bps.bytes = this -> _tx_rate;
+	bps.calculate();
+	return bps;
+}
 
-	bps.kb = bps.bytes / 1024;
-	decimal_fix(bps.kb);
+bandwidth_t::bps_t bandwidth_t::interface_t::max_rx() const {
 
-	bps.mb = bps.kb / 1024;
-	decimal_fix(bps. mb);
+	if ( this -> _max_rx_rate == 0 )
+		return bandwidth_t::bps_t(0);
 
-	bps.gb = bps.mb / 1024;
-	decimal_fix(bps.gb);
+	bandwidth_t::bps_t bps;
+	bps.bytes = this -> _max_rx_rate;
+	bps.calculate();
+	return bps;
+}
 
+bandwidth_t::bps_t bandwidth_t::interface_t::max_tx() const {
+
+	if ( this -> _max_tx_rate == 0 )
+		return bandwidth_t::bps_t(0);
+
+	bandwidth_t::bps_t bps;
+	bps.bytes = this -> _max_tx_rate;
+	bps.calculate();
 	return bps;
 }

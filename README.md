@@ -8,6 +8,18 @@ minimal bandwidth monitoring library for C++
 
 due to name unifying, this replaces older [bandwidth](https://github.com/oskarirauta/bandwidth) which is now archived.
 
+## <sub>Percentage</sub>
+
+Percentage is based on comparison to highest recorded value. In the beginning even very small
+transmissions will show high percentage values even on a high speed broadband connection.
+To get accurate percentage, one should stress connection to maximum rate - for example, by
+using [speedtest.net](https://speedtest.net) for more accurate results.
+
+### <sub>percentage of example program</sub>
+example program is fixed to show 0.01% even when it should show 0, if rate exceeds 4kb
+to show atleast some percentage even on very small transmissions when higher speed
+connection is being used - even though in calculus it's in-accurate.
+
 ## <sub>Importing</sub>
 
 bandwidth_cpp depends on [scanner_cpp](https://github.com/oskarirauta/scanner_cpp) and example

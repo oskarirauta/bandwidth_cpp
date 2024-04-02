@@ -8,10 +8,16 @@ class bandwidth_t {
 
 	public:
 
+		class interface_t;
+
 		struct bps_t {
 
-			public:
+			friend class interface_t;
 
+			private:
+				void calculate();
+
+			public:
 				enum TYPE { K, M, G };
 
 				unsigned long long bytes;
@@ -27,6 +33,14 @@ class bandwidth_t {
 				double value() const;
 
 				bps_t(const unsigned long long bytes = 0);
+				bps_t(interface_t &interface);
+		};
+
+		struct percent_t {
+
+			public:
+				double rx;
+				double tx;
 		};
 
 		class interface_t {
@@ -43,6 +57,11 @@ class bandwidth_t {
 				unsigned long long _tx_errors;
 				unsigned long long _rx_rate;
 				unsigned long long _tx_rate;
+				unsigned long long _max_rx_rate;
+				unsigned long long _max_tx_rate;
+				double _rx_percent;
+				double _tx_percent;
+
 				std::chrono::milliseconds _millis;
 
 				interface_t(std::string name,
@@ -52,7 +71,8 @@ class bandwidth_t {
 						_name(name),
 						_rx_bytes(rxb), _rx_packets(rxp), _rx_errors(rxe),
 						_tx_bytes(txb), _tx_packets(txp), _tx_errors(txe),
-						_rx_rate(0), _tx_rate(0), _millis(millis) {};
+						_rx_rate(0), _tx_rate(0), _max_rx_rate(0), _max_tx_rate(0),
+						_rx_percent(0), _tx_percent(0), _millis(millis) {};
 
 				void update(unsigned long long rxb, unsigned long long rxp, unsigned long long rxe,
 					    unsigned long long txb, unsigned long long txp, unsigned long long txe,
@@ -68,11 +88,20 @@ class bandwidth_t {
 				inline unsigned long long tx_errors() const { return this -> _tx_errors; }
 				inline unsigned long long rx_rate() const { return this -> _rx_rate; }
 				inline unsigned long long tx_rate() const { return this -> _tx_rate; }
+				inline unsigned long long max_rx_rate() const { return this -> _max_rx_rate; }
+				inline unsigned long long max_tx_rate() const { return this -> _max_tx_rate; }
+				const percent_t percent() const;
 				inline std::chrono::milliseconds millis() const { return this -> _millis; }
+
 				inline bps_t rx_bps() const { return bandwidth_t::bps_t(this -> _rx_rate); }
 				inline bps_t tx_bps() const { return bandwidth_t::bps_t(this -> _tx_rate); }
 				bps_t rx() const;
 				bps_t tx() const;
+
+				bps_t max_rx() const;
+				bps_t max_tx() const;
+				inline bps_t max_rx_bps() const { return bandwidth_t::bps_t(this -> _max_rx_rate); }
+				inline bps_t max_tx_bps() const { return bandwidth_t::bps_t(this -> _max_tx_rate); }
 		};
 
 		const std::list<bandwidth_t::interface_t> interfaces() const;

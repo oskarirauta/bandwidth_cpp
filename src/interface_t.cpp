@@ -18,6 +18,10 @@ void bandwidth_t::interface_t::update(unsigned long long rxb, unsigned long long
 		this -> _tx_errors = txe;
 		this -> _rx_rate = 0;
 		this -> _tx_rate = 0;
+		this -> _max_rx_rate = 0;
+		this -> _max_tx_rate = 0;
+		this -> _rx_percent = 0;
+		this -> _tx_percent = 0;
 		this -> _millis = new_millis;
 		return;
 	}
@@ -42,6 +46,33 @@ void bandwidth_t::interface_t::update(unsigned long long rxb, unsigned long long
 		txc *= multiplier;
 	}
 
+	if ( this -> _max_rx_rate <= rxc ) {
+		this -> _max_rx_rate = rxc;
+		this -> _rx_percent = 100.0;
+	} else {
+		long double p = (long double)rxc / (long double)this -> _max_rx_rate;
+		int _p = p * 100000;
+		_p += 5;
+		_p *= 0.1;
+		this -> _rx_percent = _p * 0.01;
+	}
+
+	if ( this -> _max_tx_rate <= txc ) {
+		this -> _max_tx_rate = txc;
+		this -> _tx_percent = 100.0;
+	} else {
+		long double p = (long double)txc / (long double)this -> _max_tx_rate;
+		int _p = p * 100000;
+		_p += 5;
+		_p *= 0.1;
+		this -> _tx_percent = _p * 0.01;
+	}
+
 	this -> _rx_rate = rxc;
 	this -> _tx_rate = txc;
+}
+
+const bandwidth_t::percent_t bandwidth_t::interface_t::percent() const {
+
+	return bandwidth_t::percent_t { .rx = this -> _rx_percent, .tx = this -> _tx_percent };
 }
