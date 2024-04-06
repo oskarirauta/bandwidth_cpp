@@ -22,14 +22,14 @@ connection is being used - even though in calculus it's in-accurate.
 
 ## <sub>Importing</sub>
 
-bandwidth_cpp depends on [scanner_cpp](https://github.com/oskarirauta/scanner_cpp) and example
+bandwidth_cpp depends on [common_cpp](https://github.com/oskarirauta/common_cpp) and example
 program depends also on [cmdparser_cpp](https://github.com/oskarirauta/cmdparser_cpp) which is
 not a requirement if you just need library.
 
- - clone scanner_cpp as submodule to scanner
+ - clone common_cpp as submodule to scanner
  - clone bandwidth_cpp as submodule to bandwidth
- - include scanner/Makefile.inc and bandwidth/makefile.inc in your Makefile
- - link with SCANNER_OBJS and BANDWIDTH_OBJS
+ - include common/Makefile.inc and bandwidth/makefile.inc in your Makefile
+ - link with COMMON_OBJS and BANDWIDTH_OBJS
 
 Paths are modifiable, check Makefiles. For example program, remember to clone this
 repository recursively with --recursive-submodules enabled for cloning.

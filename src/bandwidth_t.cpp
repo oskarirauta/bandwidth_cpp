@@ -1,7 +1,7 @@
 #include <utility>
 #include <fstream>
 
-#include "scanner.hpp"
+#include "common/scanner.hpp"
 #include "bandwidth.hpp"
 
 bandwidth_t::bandwidth_t() {
@@ -72,7 +72,7 @@ bool bandwidth_t::update(void) {
 		std::string ifd_name;
 		unsigned long long rxb, txb, rxp, txp, rxe, txe;
 
-		size_t count = scan(line, {
+		size_t count = common::scan(line, {
 			{ 0, &ifd_name },
 			{ 1, &rxb },
 			{ 2, &rxp },
