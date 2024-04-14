@@ -1,5 +1,5 @@
-BANDWIDTH_DIR?=bandwidth
-INCLUDES += -I./$(BANDWIDTH_DIR)/include
+BANDWIDTH_DIR?=./bandwidth
+INCLUDES += -I$(BANDWIDTH_DIR)/include
 
 BANDWIDTH_OBJS:= \
 	objs/interface_t.o \

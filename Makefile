@@ -4,8 +4,6 @@ CXX?=g++
 CXXFLAGS?=--std=c++17 -Wall -fPIC
 LDFLAGS?=-L/lib -L/usr/lib
 
-INCLUDES+= -I./examples/include -I.
-
 OBJS:= \
 	objs/main.o
 
