@@ -15,6 +15,14 @@ transmissions will show high percentage values even on a high speed broadband co
 To get accurate percentage, one should stress connection to maximum rate - for example, by
 using [speedtest.net](https://speedtest.net) for more accurate results.
 
+This peak-relative metric suits monitoring a connection whose real bottleneck (for example an
+internet uplink behind a faster local NIC) is not the NIC's own link speed: the observed peak
+converges to the actual usable rate. When utilisation relative to the NIC's negotiated link
+speed is wanted instead, `interface_t::link_speed()` returns that speed in Mbit/s (from
+`/sys/class/net/<if>/speed`, or 0 when unavailable, e.g. virtual interfaces) and
+`interface_t::link_percent()` reports utilisation as a percentage of it. Both metrics are
+available side by side.
+
 ### <sub>percentage of example program</sub>
 example program is fixed to show 0.01% even when it should show 0, if rate exceeds 4kb
 to show atleast some percentage even on very small transmissions when higher speed
@@ -22,13 +30,13 @@ connection is being used - even though in calculus it's in-accurate.
 
 ## <sub>Importing</sub>
 
-bandwidth_cpp depends on [common_cpp](https://github.com/oskarirauta/common_cpp) and example
-program depends also on [cmdparser_cpp](https://github.com/oskarirauta/cmdparser_cpp) which is
-not a requirement if you just need library.
+bandwidth_cpp depends on [common_cpp](https://github.com/oskarirauta/common_cpp); the example
+program depends also on [usage_cpp](https://github.com/oskarirauta/usage_cpp), which is not
+required if you only need the library.
 
- - clone common_cpp as submodule to scanner
- - clone bandwidth_cpp as submodule to bandwidth
- - include common/Makefile.inc and bandwidth/makefile.inc in your Makefile
+ - clone common_cpp as a submodule to common
+ - clone bandwidth_cpp as a submodule to bandwidth
+ - include common/Makefile.inc and bandwidth/Makefile.inc in your Makefile
  - link with COMMON_OBJS and BANDWIDTH_OBJS
 
 Paths are modifiable, check Makefiles. For example program, remember to clone this

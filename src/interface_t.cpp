@@ -1,11 +1,16 @@
+#include <string>
+#include <fstream>
+
 #include "bandwidth.hpp"
 
 void bandwidth_t::interface_t::update(unsigned long long rxb, unsigned long long rxp, unsigned long long rxe,
 				      unsigned long long txb, unsigned long long txp, unsigned long long txe,
 				      std::chrono::milliseconds new_millis) {
 
-	unsigned long long rxc = (double)(rxb - this -> _rx_bytes);
-	unsigned long long txc = (double)(txb - this -> _tx_bytes);
+	// guard against counter resets/wraps: an unsigned underflow would otherwise
+	// produce an astronomically large bogus rate
+	unsigned long long rxc = rxb >= this -> _rx_bytes ? rxb - this -> _rx_bytes : 0;
+	unsigned long long txc = txb >= this -> _tx_bytes ? txb - this -> _tx_bytes : 0;
 	double cnt;
 
 	if ( this -> _millis.count() == 0 ) {
@@ -75,4 +80,33 @@ void bandwidth_t::interface_t::update(unsigned long long rxb, unsigned long long
 const bandwidth_t::percent_t bandwidth_t::interface_t::percent() const {
 
 	return bandwidth_t::percent_t { .rx = this -> _rx_percent, .tx = this -> _tx_percent };
+}
+
+unsigned long long bandwidth_t::interface_t::link_speed() const {
+
+	// /sys/class/net/<if>/speed reports the link speed in Mbit/s; virtual
+	// interfaces (lo, bridges, veth, ...) have no speed and the read fails,
+	// in which case we report 0 (capacity unknown)
+	std::ifstream fd("/sys/class/net/" + this -> _name + "/speed", std::ios::in);
+	long long sp = 0;
+
+	if ( fd.is_open() && fd.good() && ( fd >> sp ) && sp > 0 )
+		return (unsigned long long)sp;
+
+	return 0;
+}
+
+const bandwidth_t::percent_t bandwidth_t::interface_t::link_percent() const {
+
+	unsigned long long speed = this -> link_speed();
+
+	if ( speed == 0 )
+		return bandwidth_t::percent_t { .rx = 0, .tx = 0 };
+
+	double capacity = (double)speed * 1000000.0;	// Mbit/s -> bits/s
+
+	return bandwidth_t::percent_t {
+		.rx = 100.0 * (( double )this -> _rx_rate * 8.0 ) / capacity,
+		.tx = 100.0 * (( double )this -> _tx_rate * 8.0 ) / capacity
+	};
 }

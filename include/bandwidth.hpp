@@ -33,7 +33,7 @@ class bandwidth_t {
 				double value() const;
 
 				bps_t(const unsigned long long bytes = 0);
-				bps_t(interface_t &interface);
+				bps_t(const bps_t&) = default;
 		};
 
 		struct percent_t {
@@ -90,7 +90,9 @@ class bandwidth_t {
 				inline unsigned long long tx_rate() const { return this -> _tx_rate; }
 				inline unsigned long long max_rx_rate() const { return this -> _max_rx_rate; }
 				inline unsigned long long max_tx_rate() const { return this -> _max_tx_rate; }
-				const percent_t percent() const;
+				const percent_t percent() const;		// utilisation vs the highest rate seen so far
+				unsigned long long link_speed() const;		// link speed in Mbit/s from sysfs, 0 if unknown
+				const percent_t link_percent() const;		// utilisation vs the link's capacity (0 if link speed unknown)
 				inline std::chrono::milliseconds millis() const { return this -> _millis; }
 
 				inline bps_t rx_bps() const { return bandwidth_t::bps_t(this -> _rx_rate); }

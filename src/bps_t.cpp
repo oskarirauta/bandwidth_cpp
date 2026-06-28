@@ -9,7 +9,7 @@ static void decimal_fix(double &value) {
 
 bandwidth_t::bps_t::bps_t(const unsigned long long bytes) {
 
-	this -> bytes = bytes == 0 ? 0 : (( bytes / 1.049 ) * 8.3886 );
+	this -> bytes = bytes * 8;	// a byte rate in, stored as a bit rate (bits/s)
 	this -> calculate();
 }
 
@@ -24,13 +24,14 @@ void bandwidth_t::bps_t::calculate() {
 
 	} else {
 
-		this -> kb = this -> bytes / 1024;
+		// network rates use decimal kilo/mega/giga (1000), not binary (1024)
+		this -> kb = this -> bytes / 1000;
 		decimal_fix(this -> kb);
 
-		this -> mb = this -> kb / 1024;
+		this -> mb = this -> kb / 1000;
 		decimal_fix(this -> mb);
 
-		this -> gb = this -> mb / 1024;
+		this -> gb = this -> mb / 1000;
 		decimal_fix(this -> gb);
 	}
 }

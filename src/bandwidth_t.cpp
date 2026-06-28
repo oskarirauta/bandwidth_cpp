@@ -21,10 +21,10 @@ static std::string clean_up(const std::string& s) {
 
 	std::string s1 = s;
 
-	while ( std::isspace(s1.front()))
+	while ( !s1.empty() && std::isspace((unsigned char)s1.front()))
 		s1.erase(0, 1);
 
-	while ( std::isspace(s1.back()))
+	while ( !s1.empty() && std::isspace((unsigned char)s1.back()))
 		s1.pop_back();
 
 	if ( auto it = s1.find_first_of(':'); it != std::string::npos )
@@ -36,13 +36,13 @@ static std::string clean_up(const std::string& s) {
 
 	std::string s2;
 	for ( const std::string::value_type& ch : s1 )
-		if ( std::isspace(ch) && std::isspace(s2.back()))
+		if ( std::isspace((unsigned char)ch) && !s2.empty() && std::isspace((unsigned char)s2.back()))
 			continue;
-		else if ( std::isspace(ch))
+		else if ( std::isspace((unsigned char)ch))
 			s2 += ' ';
 		else s2 += ch;
 
-	if ( !std::isalpha(s2.front()))
+	if ( s2.empty() || !std::isalpha((unsigned char)s2.front()))
 		return "";
 
 	return s2;
